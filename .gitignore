@@ -1,0 +1,8 @@
+
+*.chkpt
+
+.idea/
+
+checkpoints/
+results/
+[Bb]uild/
