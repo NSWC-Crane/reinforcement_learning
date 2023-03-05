@@ -1,23 +1,22 @@
 # Install packages
+import time
+import math
 import gym
-import copy
+# import copy
 import torch
-from torch.autograd import Variable
+# import torch.nn as nn
+# from torch.autograd import Variable
 import random
 import matplotlib.pyplot as plt
 from PIL import Image
 from IPython.display import clear_output
-import math
 import torchvision.transforms as T
 import numpy as np
 
-import time
-
-env = gym.envs.make("CartPole-v1")
+from DQN_double_pytorch import DQN_double
 
 # Demonstration
 env = gym.envs.make("CartPole-v1")
-
 
 def get_screen():
     ''' Extract one step of the simulation.'''
@@ -72,77 +71,78 @@ def plot_res(values, title=''):
     plt.show()
 
 
-class DQN():
-    ''' Deep Q Neural Network class. '''
-    def __init__(self, state_dim, action_dim, hidden_dim=64, lr=0.05):
-            self.criterion = torch.nn.MSELoss()
-            self.model = torch.nn.Sequential(
-                            torch.nn.Linear(state_dim, hidden_dim),
-                            # torch.nn.LeakyReLU(),
-                            # torch.nn.ReLU(),
-                            torch.nn.PReLU(),
-                            torch.nn.Linear(hidden_dim, hidden_dim*2),
-                            # torch.nn.LeakyReLU(),
-                            # torch.nn.ReLU(),
-                            torch.nn.PReLU(),
-                            torch.nn.Linear(hidden_dim*2, action_dim)
-                    )
-            self.optimizer = torch.optim.Adam(self.model.parameters(), lr)
-
-
-
-    def update(self, state, y):
-        """Update the weights of the network given a training sample. """
-        y_pred = self.model(torch.Tensor(state))
-        loss = self.criterion(y_pred, Variable(torch.Tensor(y)))
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
-
-
-    def predict(self, state):
-        """ Compute Q values for all actions using the DQL. """
-        with torch.no_grad():
-            return self.model(torch.Tensor(state))
-
-
-class DQN_double(DQN):
-    def __init__(self, state_dim, action_dim, hidden_dim, lr):
-        super().__init__(state_dim, action_dim, hidden_dim, lr)
-        self.target = copy.deepcopy(self.model)
-
-    def target_predict(self, s):
-        ''' Use target network to make predicitons.'''
-        with torch.no_grad():
-            return self.target(torch.Tensor(s))
-
-    def target_update(self):
-        ''' Update target network with the model weights.'''
-        self.target.load_state_dict(self.model.state_dict())
-
-    def replay(self, memory, size, gamma=1.0):
-        ''' Add experience replay to the DQL network class.'''
-        if len(memory) >= size:
-            # Sample experiences from the agent's memory
-            data = random.sample(memory, size)
-            states = []
-            targets = []
-            # Extract datapoints from the data
-            for state, action, next_state, reward, done in data:
-                states.append(state)
-                q_values = self.predict(state).tolist()
-                if done:
-                    q_values[action] = reward
-                else:
-                    # The only difference between the simple replay is in this line
-                    # It ensures that next q values are predicted with the target network.
-                    q_values_next = self.target_predict(next_state)
-                    q_values[action] = reward + gamma * torch.max(q_values_next).item()
-
-                targets.append(q_values)
-
-            self.update(states, targets)
-
+# class DQN(nn.Module):
+#     ''' Deep Q Neural Network class. '''
+#     def __init__(self, state_dim, action_dim, hidden_dim=64, lr=0.05):
+#         super(DQN, self).__init__()
+#         self.criterion = torch.nn.MSELoss()
+#         self.model = torch.nn.Sequential(
+#                         torch.nn.Linear(state_dim, hidden_dim),
+#                         # torch.nn.LeakyReLU(),
+#                         # torch.nn.ReLU(),
+#                         torch.nn.PReLU(),
+#                         torch.nn.Linear(hidden_dim, hidden_dim*2),
+#                         # torch.nn.LeakyReLU(),
+#                         # torch.nn.ReLU(),
+#                         torch.nn.PReLU(),
+#                         torch.nn.Linear(hidden_dim*2, action_dim)
+#                 )
+#         self.optimizer = torch.optim.Adam(self.model.parameters(), lr)
+#
+#
+#
+#     def update(self, state, y):
+#         """Update the weights of the network given a training sample. """
+#         y_pred = self.model(torch.Tensor(state))
+#         loss = self.criterion(y_pred, Variable(torch.Tensor(y)))
+#         self.optimizer.zero_grad()
+#         loss.backward()
+#         self.optimizer.step()
+#
+#
+#     def predict(self, state):
+#         """ Compute Q values for all actions using the DQL. """
+#         with torch.no_grad():
+#             return self.model(torch.Tensor(state))
+#
+#
+# class DQN_double(DQN):
+#     def __init__(self, state_dim, action_dim, hidden_dim, lr):
+#         super().__init__(state_dim, action_dim, hidden_dim, lr)
+#         self.target = copy.deepcopy(self.model)
+#
+#     def target_predict(self, s):
+#         ''' Use target network to make predicitons.'''
+#         with torch.no_grad():
+#             return self.target(torch.Tensor(s))
+#
+#     def target_update(self):
+#         ''' Update target network with the model weights.'''
+#         self.target.load_state_dict(self.model.state_dict())
+#
+#     def replay(self, memory, size, gamma=1.0):
+#         ''' Add experience replay to the DQL network class.'''
+#         if len(memory) >= size:
+#             # Sample experiences from the agent's memory
+#             data = random.sample(memory, size)
+#             states = []
+#             targets = []
+#             # Extract datapoints from the data
+#             for state, action, next_state, reward, done in data:
+#                 states.append(state)
+#                 q_values = self.predict(state).tolist()
+#                 if done:
+#                     q_values[action] = reward
+#                 else:
+#                     # The only difference between the simple replay is in this line
+#                     # It ensures that next q values are predicted with the target network.
+#                     q_values_next = self.target_predict(next_state)
+#                     q_values[action] = reward + gamma * torch.max(q_values_next).item()
+#
+#                 targets.append(q_values)
+#
+#             self.update(states, targets)
+#
 
 def q_learning(env, model, episodes, gamma=0.9,
                epsilon=0.3, eps_decay=0.99,
@@ -215,8 +215,12 @@ def q_learning(env, model, episodes, gamma=0.9,
             if replay:
                 print("Average replay time:", sum_total_replay_time / episode_i)
 
+        # adding stop if we reach 500
+        if total == 500:
+            break
+
     plot_res(final, title)
-    return final
+    return final, model
 
 # https://towardsdatascience.com/how-to-beat-the-cartpole-game-in-5-lines-5ab4e738c93f
 # https://github.com/jianxu305/openai-gym-docker/blob/main/example/Solving_CartPole_in_5_Lines.ipynb
@@ -236,11 +240,16 @@ episodes = 1000
 # Number of hidden nodes in the DQN
 n_hidden = 200
 # Learning rate
-lr = 0.0002
+lr = 0.0003
 
 # Get replay results
 dqn_double = DQN_double(n_state, n_action, n_hidden, lr)
-double = q_learning(env, dqn_double, episodes, gamma=.9,
+double, trained_dqn_double = q_learning(env, dqn_double, episodes, gamma=.9,
                     epsilon=0.2, replay=False, double=True,
                     title='Double DQL with Replay', n_update=5)
+
+save_path = "trained_DQN.pt"
+torch.save(trained_dqn_double.state_dict(), save_path)
+
+bp = 1
 

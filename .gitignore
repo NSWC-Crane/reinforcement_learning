@@ -1,7 +1,9 @@
 
 *.chkpt
+*.pt
 
 .idea/
+__pycache__/
 
 checkpoints/
 results/
