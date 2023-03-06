@@ -1,11 +1,8 @@
-# Install packages
+# packages
 import time
 import math
 import gym
-# import copy
 import torch
-# import torch.nn as nn
-# from torch.autograd import Variable
 import random
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -216,8 +213,8 @@ def q_learning(env, model, episodes, gamma=0.9,
                 print("Average replay time:", sum_total_replay_time / episode_i)
 
         # adding stop if we reach 500
-        if total == 500:
-            break
+        # if total == 500:
+        #     break
 
     plot_res(final, title)
     return final, model
@@ -238,9 +235,9 @@ n_action = env.action_space.n
 # Number of episodes
 episodes = 1000
 # Number of hidden nodes in the DQN
-n_hidden = 200
+n_hidden = 100
 # Learning rate
-lr = 0.0003
+lr = 0.002
 
 # Get replay results
 dqn_double = DQN_double(n_state, n_action, n_hidden, lr)

@@ -41,7 +41,7 @@ class DQN(nn.Module):
 
 
 class DQN_double(DQN):
-    def __init__(self, state_dim, action_dim, hidden_dim, lr):
+    def __init__(self, state_dim, action_dim, hidden_dim=64, lr=0.05):
         super().__init__(state_dim, action_dim, hidden_dim, lr)
         self.target = copy.deepcopy(self.model)
 
