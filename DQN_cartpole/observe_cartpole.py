@@ -5,15 +5,12 @@ import gym
 import torch
 import random
 import matplotlib.pyplot as plt
-from PIL import Image
-from IPython.display import clear_output
-import torchvision.transforms as T
+
 import numpy as np
 import cv2
 
 # birch clustering
 from sklearn.cluster import Birch
-from matplotlib import pyplot
 
 from DQN_double_pytorch import DQN_double
 
@@ -32,10 +29,10 @@ n_hidden = 100
 lr = 0.0003
 
 # load in the model
-load_path = "trained_DQN.pt"
-model = DQN_double(state_size, action_size, n_hidden)
-model.load_state_dict(torch.load(load_path))
-model.eval()
+# load_path = "trained_DQN.pt"
+# model = DQN_double(state_size, action_size, n_hidden)
+# model.load_state_dict(torch.load(load_path))
+# model.eval()
 
 state = env.reset()
 done = False
@@ -44,9 +41,12 @@ done = False
 num_episodes = int(math.floor(state_size*200))
 max_steps = 500
 
-q_est = np.zeros((num_episodes*max_steps, state_size+1))
+q_obs = np.zeros((num_episodes*max_steps, state_size+1))
+q_est = np.zeros((action_size, state_size))
 
 index = 0
+
+action_idx = np.ones((action_size))
 
 # watch trained agent
 for idx in range(num_episodes):
@@ -57,7 +57,13 @@ for idx in range(num_episodes):
 
     while not done:
         action = theta_omega_policy(state)
-        q_est[index] = np.append(state, action)
+        q_obs[index] = np.append(state, action)
+
+        # rolling average to find the centers of the cluster
+        q_est[action, :] += (state - q_est[action, :])/(action_idx[action])
+
+        action_idx[action] += 1
+
 
         # Take action and add reward to total
         state, reward, done, _ = env.step(action)
@@ -66,36 +72,41 @@ for idx in range(num_episodes):
         index += 1
 
         if done == True:
-            print("  Score: {}".format(total_rewards))
+            print("Episode {}: - Score = {}".format(idx, total_rewards))
             break
 
 bp = 1
 
-# np.save("../../data/cartpole_phy_q_est_{}.npy".format(num_episodes), q_est, allow_pickle=False, fix_imports=True)
+np.save("../data/cartpole_phy_q_est_{}.npy".format(num_episodes), q_est, allow_pickle=False, fix_imports=True)
+np.save("../data/cartpole_phy_q_obs_{}.npy".format(num_episodes), q_obs, allow_pickle=False, fix_imports=True)
+
+np.savetxt("../data/cartpole_phy_q_est_{}.csv".format(num_episodes), q_est, delimiter=",")
+np.savetxt("../data/cartpole_phy_q_obs_{}.csv".format(num_episodes), q_obs, delimiter=",")
+
 
 # define the model
-model = Birch(threshold=0.01, n_clusters=2)
-
-q_tmp = q_est[:, 0:4]
-
-# fit the model
-model.fit(q_tmp)
-
-# assign a cluster to each example
-yhat = model.predict(q_tmp)
-
-# retrieve unique clusters
-clusters = np.unique(yhat)
-
-# create scatter plot for samples from each cluster
-for cluster in clusters:
-    # get row indexes for samples with this cluster
-    row_ix = np.where(yhat == cluster)
-    # create scatter of these samples
-    pyplot.scatter(q_tmp[row_ix, 2], q_tmp[row_ix, 3])
-
-# show the plot
-pyplot.show()
+# model = Birch(threshold=0.01, n_clusters=2)
+#
+# q_tmp = q_est[:, 0:4]
+#
+# # fit the model
+# model.fit(q_tmp)
+#
+# # assign a cluster to each example
+# yhat = model.predict(q_tmp)
+#
+# # retrieve unique clusters
+# clusters = np.unique(yhat)
+#
+# # create scatter plot for samples from each cluster
+# for cluster in clusters:
+#     # get row indexes for samples with this cluster
+#     row_ix = np.where(yhat == cluster)
+#     # create scatter of these samples
+#     pyplot.scatter(q_tmp[row_ix, 2], q_tmp[row_ix, 3])
+#
+# # show the plot
+# pyplot.show()
 
 env.close()
 
