@@ -14,6 +14,8 @@ import cv2
 
 from DQN_double_pytorch import DQN_double
 
+from theta_omega import theta_omega_policy
+
 # Demonstration
 env = gym.envs.make("CartPole-v1")
 
@@ -41,8 +43,10 @@ done = False
 total = 0
 
 while not done:
-    q_values = model.target_predict(state)
-    action = torch.argmax(q_values).item()
+    action = theta_omega_policy(state)
+
+    # q_values = model.target_predict(state)
+    # action = torch.argmax(q_values).item()
 
     # Take action and add reward to total
     next_state, reward, done, _ = env.step(action)
