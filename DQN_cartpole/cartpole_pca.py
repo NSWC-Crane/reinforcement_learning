@@ -13,14 +13,18 @@ x = df.loc[:, features].values
 y = df.loc[:,['action']].values
 x = StandardScaler().fit_transform(x)
 
+# Compute 3-component PCA on state observations
 pca = PCA(n_components=3)
 prin_comps = pca.fit_transform(x)
 prin_df = pd.DataFrame(data=prin_comps)
 
+# Combine principal component dataframe with action dataframe, renmae columns
 plot_df = pd.concat([prin_df, df[['action']]], axis=1)
 plot_df.rename(columns={plot_df.columns[0]: 'PC1', plot_df.columns[1]: 'PC2', plot_df.columns[2]: 'PC3', 'action': 'action'}, 
         inplace=True)
 
+# Plot 3D scatter of principal component projections colored
+# according to action (0 or 1)
 fig = px.scatter_3d(plot_df,
         x='PC1',
         y='PC2',
