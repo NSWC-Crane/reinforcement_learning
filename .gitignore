@@ -1,6 +1,7 @@
 
 *.chkpt
 *.pt
+*.asv
 
 .idea/
 __pycache__/
