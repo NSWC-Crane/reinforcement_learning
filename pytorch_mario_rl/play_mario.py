@@ -1,17 +1,21 @@
+import datetime
+from pathlib import Path
 
 from pyglet import clock
 import time
 
 import gym
-import gym_super_mario_bros
 from gym.wrappers import FrameStack, GrayScaleObservation, TransformObservation
+from wrappers import ResizeObservation, SkipFrame
+
+import gym_super_mario_bros
+from gym_super_mario_bros.actions import RIGHT_ONLY, SIMPLE_MOVEMENT, COMPLEX_MOVEMENT
+
 from nes_py.wrappers import JoypadSpace
 from nes_py._image_viewer import ImageViewer
 
-from metrics import MetricLogger
-
-from wrappers import ResizeObservation, SkipFrame
-from gym_super_mario_bros.actions import RIGHT_ONLY, SIMPLE_MOVEMENT, COMPLEX_MOVEMENT
+# from metrics import MetricLogger
+from observation_logger import observation_logger
 
 # the sentinel value for "No Operation"
 _NOP = 0
@@ -53,6 +57,8 @@ def play_human(env, viewer, callback=None):
     last_frame_time = 0
     # start the main game loop
     try:
+        state = env.reset()
+
         while True:
             current_frame_time = time.time()
 
@@ -68,9 +74,10 @@ def play_human(env, viewer, callback=None):
 
             # reset if the environment is done
             if done:
-                done = False
-                state = env.reset()
                 viewer.show(env.unwrapped.screen)
+                break
+                # done = False
+                # state = env.reset()
 
             # unwrap the action based on pressed relevant keys
             action = keys_to_action.get(viewer.pressed_keys, _NOP)
@@ -80,7 +87,7 @@ def play_human(env, viewer, callback=None):
 
             # pass the observation data through the callback
             if callback is not None:
-                callback(state, action, reward, done, next_state)
+                callback.record(action, state)
 
             state = next_state
 
@@ -112,13 +119,22 @@ viewer = ImageViewer(
     relevant_keys=set(sum(map(list, keys_to_action.keys()), []))
     )
 
-play_human(env, viewer)
+
+#------------------- START --------------------
+
+save_dir = Path('checkpoints') / datetime.datetime.now().strftime('%Y-%m-%dT%H-%M-%S')
+obs_logger = observation_logger(save_dir)
+
+obs_logger.init_episode(0)
+
+play_human(env, viewer, callback=obs_logger)
 
 episodes = 100
 
-for e in range(episodes):
+# for e in range(episodes):
 
-    state = env.reset()
+    # state = env.reset()
 
+viewer.close()
 
-
+bp = 1
