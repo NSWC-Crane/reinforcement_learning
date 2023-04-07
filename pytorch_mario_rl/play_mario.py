@@ -23,13 +23,16 @@ _NOP = 0
 env = gym_super_mario_bros.make('SuperMarioBros-1-1-v0')
 # env = JoypadSpace(env, COMPLEX_MOVEMENT)
 
+
+env_h = env.observation_space.shape[0]  # height
+env_w = env.observation_space.shape[1]  # width
+
 # env = SkipFrame(env, skip=4)
 env = GrayScaleObservation(env, keep_dim=False)
-env = ResizeObservation(env, shape=84)
+env = ResizeObservation(env, shape=(env_h//3, env_w//3))
 env = TransformObservation(env, f=lambda x: x / 255.)
 # env = FrameStack(env, num_stack=4)
 env.reset()
-
 
 def play_human(env, viewer, callback=None):
     """
@@ -50,7 +53,7 @@ def play_human(env, viewer, callback=None):
     assert is_bw or is_rgb
 
     # create a done flag for the environment
-    done = True
+    done = False
 
     # prepare frame rate limiting
     target_frame_duration = 1 / env.metadata['video.frames_per_second']
@@ -87,7 +90,8 @@ def play_human(env, viewer, callback=None):
 
             # pass the observation data through the callback
             if callback is not None:
-                callback.record(action, state)
+                # callback.record(action, state)
+                bp = 1
 
             state = next_state
 
@@ -114,7 +118,7 @@ viewer = ImageViewer(
     env.spec.id if env.spec is not None else env.__class__.__name__,
     # env.observation_space.shape[0], # height
     # env.observation_space.shape[1], # width
-    500, 500,
+    env_h*2, env_h*2,
     monitor_keyboard=True,
     relevant_keys=set(sum(map(list, keys_to_action.keys()), []))
     )
