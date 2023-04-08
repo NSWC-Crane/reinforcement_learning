@@ -30,7 +30,7 @@ env_w = env.observation_space.shape[1]  # width
 # env = SkipFrame(env, skip=4)
 env = GrayScaleObservation(env, keep_dim=False)
 env = ResizeObservation(env, shape=(env_h//3, env_w//3))
-env = TransformObservation(env, f=lambda x: x / 255.)
+# env = TransformObservation(env, f=lambda x: x / 255.)
 # env = FrameStack(env, num_stack=4)
 env.reset()
 
@@ -51,6 +51,9 @@ def play_human(env, viewer, callback=None):
     is_bw = len(obs_s.shape) == 2
     is_rgb = len(obs_s.shape) == 3 and obs_s.shape[2] in [1, 3]
     assert is_bw or is_rgb
+
+    env_h = env.observation_space.shape[0]  # height
+    env_w = env.observation_space.shape[1]  # width
 
     # create a done flag for the environment
     done = False
@@ -84,13 +87,14 @@ def play_human(env, viewer, callback=None):
 
             # unwrap the action based on pressed relevant keys
             action = keys_to_action.get(viewer.pressed_keys, _NOP)
-            next_state, reward, done, _ = env.step(action)
+            next_state, reward, done, info = env.step(action)
 
             viewer.show(env.unwrapped.screen)
 
             # pass the observation data through the callback
-            if callback is not None:
+            if (callback is not None) and (info['time'] < 400):
                 # callback.record(action, state)
+                callback.log_step(action, env_h, env_w, state)
                 bp = 1
 
             state = next_state
@@ -132,6 +136,8 @@ obs_logger = observation_logger(save_dir)
 obs_logger.init_episode(0)
 
 play_human(env, viewer, callback=obs_logger)
+
+obs_logger.save()
 
 episodes = 100
 

@@ -14,8 +14,9 @@ class observation_logger():
         # self.ep_avg_qs_plot = save_dir / "q_plot.jpg"
 
         # observation data
-        self.action = []
-        self.state = []
+        # self.action = []
+        # self.state = []
+        self.data_log = []
 
         # # Moving averages, added for every call to record()
         # self.moving_avg_ep_rewards = []
@@ -29,30 +30,37 @@ class observation_logger():
         # Timing
         self.record_time = time.time()
 
-    # def log_step(self, state, action):
-    #     self.state.append(state)
-    #     self.action.append(action)
+    def log_step(self, action, h, w, state):
+
+        step = np.array([action, h, w])
+        step = np.append(step, np.ravel(state))
+        self.data_log.append(step.astype(np.uint8))
+
+
     def init_episode(self, episode):
         self.save_file = self.save_dir / f"{'mario_obs_log_'}{episode:04d}.csv"
 
         # observation data
-        self.action = []
-        self.state = []
+        self.data_log = []
+        # self.state = []
 
-        with open(self.save_file, "w") as f:
-            f.write(
-                # f"{'Time,':>20}{'action,':>8}{'State':<100}\n"
-                f"{'Time, '}{'action, '}{'State '}\n"
-            )
+        # with open(self.save_file, "w") as f:
+        #     f.write(
+        #         # f"{'Time,':>20}{'action,':>8}{'State':<100}\n"
+        #         f"{'Time, '}{'action, '}{'State '}\n"
+        #     )
 
-    def record(self, state, action):
+    def save(self):
 
-        self.state.append(state)
-        self.action.append(action)
+        # self.state.append(state)
+        # self.action.append(action)
+        np.save(self.save_file, np.array(self.data_log), allow_pickle=False, fix_imports=True)
 
-        last_record_time = self.record_time
-        self.record_time = time.time()
-        time_since_last_record = np.round(self.record_time - last_record_time, 3)
+        np.savetxt(self.save_file, np.array(self.data_log), fmt='%d', delimiter=",")
+
+        # last_record_time = self.record_time
+        # self.record_time = time.time()
+        # time_since_last_record = np.round(self.record_time - last_record_time, 3)
 
         # print(
         #     f"Episode {episode} - "
@@ -66,12 +74,12 @@ class observation_logger():
         #     f"Time {datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')}"
         # )
 
-        with open(self.save_file, "a") as f:
-            f.write(
-                f"{time_since_last_record:15.3f}"
-                f"{action:3d}{','}{state}"
-                # f"{mean_ep_reward:15.3f}{mean_ep_length:15.3f}{mean_ep_loss:15.3f}{mean_ep_q:15.3f}"
-                # f"{datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'):>20}\n"
-                f"\n"
-            )
+        # with open(self.save_file, "a") as f:
+        #     f.write(
+        #         f"{time_since_last_record:15.3f}"
+        #         f"{action}{','}{state}"
+        #         # f"{mean_ep_reward:15.3f}{mean_ep_length:15.3f}{mean_ep_loss:15.3f}{mean_ep_q:15.3f}"
+        #         # f"{datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S'):>20}\n"
+        #         f"\n"
+        #     )
 
