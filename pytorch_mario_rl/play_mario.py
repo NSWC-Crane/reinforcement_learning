@@ -91,11 +91,12 @@ def play_human(env, viewer, callback=None):
 
             viewer.show(env.unwrapped.screen)
 
-            # pass the observation data through the callback
-            if (callback is not None) and (info['time'] < 400):
-                # callback.record(action, state)
-                callback.log_step(action, env_h, env_w, state)
+            # pass the observation data through the callback, wait to record after first movement
+            if (callback is not None) and (info['x_pos'] != 40):
+                callback.log_step(action, state)
+                # callback.log_step(action, env_h, env_w, state, info)
                 bp = 1
+                print(info['x_pos'])
 
             state = next_state
 
@@ -106,10 +107,15 @@ def play_human(env, viewer, callback=None):
     except KeyboardInterrupt:
         pass
 
-    # viewer.close()
+    viewer.close()
+
+    if (callback is not None):
+        callback.save(info, env_h, env_w)
 
 
+#------------------- START --------------------
 # get the mapping of keyboard keys to actions in the environment
+
 if hasattr(env, 'get_keys_to_action'):
     keys_to_action = env.get_keys_to_action()
 elif hasattr(env.unwrapped, 'get_keys_to_action'):
@@ -127,24 +133,18 @@ viewer = ImageViewer(
     relevant_keys=set(sum(map(list, keys_to_action.keys()), []))
     )
 
-
-#------------------- START --------------------
-
 save_dir = Path('checkpoints') / datetime.datetime.now().strftime('%Y-%m-%dT%H-%M-%S')
 obs_logger = observation_logger(save_dir)
 
-obs_logger.init_episode(0)
+episodes = 30
 
-play_human(env, viewer, callback=obs_logger)
+for idx in range(episodes):
 
-obs_logger.save()
+    obs_logger.init_episode(idx)
 
-episodes = 100
+    play_human(env, viewer, callback=obs_logger)
 
-# for e in range(episodes):
 
-    # state = env.reset()
-
-viewer.close()
+env.close()
 
 bp = 1
