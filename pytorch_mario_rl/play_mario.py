@@ -94,9 +94,7 @@ def play_human(env, viewer, callback=None):
             # pass the observation data through the callback, wait to record after first movement
             if (callback is not None) and (info['x_pos'] != 40):
                 callback.log_step(action, state)
-                # callback.log_step(action, env_h, env_w, state, info)
                 bp = 1
-                print(info['x_pos'])
 
             state = next_state
 
