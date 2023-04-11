@@ -127,6 +127,8 @@ else:
 save_dir = Path('checkpoints') / datetime.datetime.now().strftime('%Y-%m-%dT%H-%M-%S')
 obs_logger = observation_logger(save_dir)
 
+random.seed(2023)
+
 episodes = 30
 
 for idx in range(episodes):
@@ -158,6 +160,7 @@ for idx in range(episodes):
 
     play_human(env, viewer, callback=obs_logger)
 
+    viewer.close()
     env.close()
 
 # env.close()
