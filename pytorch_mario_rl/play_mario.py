@@ -1,5 +1,6 @@
 import datetime
 from pathlib import Path
+import random
 
 from pyglet import clock
 import time
@@ -121,15 +122,7 @@ elif hasattr(env.unwrapped, 'get_keys_to_action'):
 else:
     raise ValueError('env has no get_keys_to_action method')
 
-# create the image viewer
-viewer = ImageViewer(
-    env.spec.id if env.spec is not None else env.__class__.__name__,
-    # env.observation_space.shape[0], # height
-    # env.observation_space.shape[1], # width
-    env_h*2, env_h*2,
-    monitor_keyboard=True,
-    relevant_keys=set(sum(map(list, keys_to_action.keys()), []))
-    )
+
 
 save_dir = Path('checkpoints') / datetime.datetime.now().strftime('%Y-%m-%dT%H-%M-%S')
 obs_logger = observation_logger(save_dir)
@@ -138,11 +131,35 @@ episodes = 30
 
 for idx in range(episodes):
 
+    # create the image viewer
+    viewer = ImageViewer(
+        env.spec.id if env.spec is not None else env.__class__.__name__,
+        # env.observation_space.shape[0], # height
+        # env.observation_space.shape[1], # width
+        env_h * 3, env_h * 3,
+        monitor_keyboard=True,
+        relevant_keys=set(sum(map(list, keys_to_action.keys()), []))
+    )
+
+    world = "{}".format(random.randint(1, 8))
+    stage = "{}".format(random.randint(1, 4))
+
+    level = "SuperMarioBros-" + world + "-" + stage + "-v0"
+
+    print("Starting Episode: {:02d}".format(idx))
+
+    env = gym_super_mario_bros.make(level)
+    env = GrayScaleObservation(env, keep_dim=False)
+    env = ResizeObservation(env, shape=(env_h // 3, env_w // 3))
+    # env.seed(idx)
+    # env.reset()
+
     obs_logger.init_episode(idx)
 
     play_human(env, viewer, callback=obs_logger)
 
+    env.close()
 
-env.close()
+# env.close()
 
 bp = 1
